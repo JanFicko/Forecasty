@@ -1,9 +1,12 @@
-package xyz.janficko.forecasty.tasks;
+package xyz.janficko.forecasty.task;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
+
+import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,26 +14,38 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+
+import xyz.janficko.forecasty.WeatherDataParser;
 
 /**
  * Created by Jan on 10. 08. 2016.
  */
-public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
+public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
     private Context context; //field in your AsyncTask
+    private static final String APPID = "7f5abb431c205025e73ea0ceb1651e0d";
+    private static final int numDays = 7;
 
-    private String appId = "7f5abb431c205025e73ea0ceb1651e0d";
+    private ArrayList<String> forecastArrayA = new ArrayList<String>();
+
+    public FetchWeatherTask() {}
 
     public FetchWeatherTask(Context context) {
         this.context = context;
     }
 
     @Override
-    protected Void doInBackground(String... params) {
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
 
+    @Override
+    protected String[] doInBackground(String... params) {
+
+        String[] result = {};
         String city = params[0];
 
-        //URL url = new URL("&APPID=7f5abb431c205025e73ea0ceb1651e0d");
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
         HttpURLConnection urlConnection = null;
@@ -52,7 +67,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
                     .appendQueryParameter(FORMAT_PARAM, "json")
                     .appendQueryParameter(UNITS_PARAM, "metric")
                     .appendQueryParameter(DAYS_PARAM, "7")
-                    .appendQueryParameter(KEY_PARAM, appId);
+                    .appendQueryParameter(KEY_PARAM, APPID);
 
             String baseUrl = builder.build().toString();
 
@@ -86,11 +101,18 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
             }
             forecastJsonStr = buffer.toString();
 
-            Log.v("Forecast", forecastJsonStr);
+            WeatherDataParser weatherDataPraser = new WeatherDataParser();
+
+            try {
+                result = weatherDataPraser.getWeatherDataFromJson(forecastJsonStr, numDays);
+            } catch (JSONException e) {
+                Log.e("FetchWeatherTask", e.getMessage(), e);
+                e.printStackTrace();
+            }
+
         } catch (IOException e) {
             Log.e("FetchWeatherTask", "Error ", e);
-            // If the code didn't successfully get the weather data, there's no point in attemping
-            // to parse it.
+
             return null;
         } finally {
             if (urlConnection != null) {
@@ -104,7 +126,27 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
                 }
             }
         }
-        return null;
+
+        return result;
     }
 
+    @Override
+    protected void onPostExecute(String[] strings) {
+        super.onPostExecute(strings);
+
+        if (strings != null) {
+            for(String dayForecastStr : strings) {
+                forecastArrayA.add(dayForecastStr);
+            }
+        }
+
+    }
+
+    public ArrayList<String> getForecastArrayA() {
+        return forecastArrayA;
+    }
+
+    public void setForecastArrayA(ArrayList<String> forecastArrayA) {
+        this.forecastArrayA = forecastArrayA;
+    }
 }

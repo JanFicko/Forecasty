@@ -1,13 +1,11 @@
 package xyz.janficko.forecasty;
 
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import xyz.janficko.forecasty.fragment.ForecastFragment;
-import xyz.janficko.forecasty.tasks.FetchWeatherTask;
 
 public class MainActivity extends ActionBarActivity {
 

@@ -1,6 +1,5 @@
 package xyz.janficko.forecasty.fragment;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -13,21 +12,17 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 import xyz.janficko.forecasty.R;
-import xyz.janficko.forecasty.tasks.FetchWeatherTask;
+import xyz.janficko.forecasty.task.FetchWeatherTask;
 
 /**
  * Created by Jan on 8. 08. 2016.
  */
 public class ForecastFragment extends Fragment {
+
+    private ArrayAdapter<String> forecastAdapter;
 
     public ForecastFragment() {
     }
@@ -64,14 +59,10 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        ArrayList<String> vreme = new ArrayList<String>();
-        vreme.add("Danes - Sončno - 25/17");
-        vreme.add("Jutri - Sončno - 25/17");
-        vreme.add("Sreda - Sončno - 25/17");
-        vreme.add("Četrtek - Sončno - 25/17");
-        vreme.add("Petek - Sončno - 25/17");
+        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
+        weatherTask.execute("Maribor,si");
 
-        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(
+        forecastAdapter = new ArrayAdapter<String>(
                 // The current context (this fragment's parent activity)
                 getActivity(),
                 // ID of the list item layout
@@ -79,12 +70,10 @@ public class ForecastFragment extends Fragment {
                 // ID of textview to populate
                 R.id.list_item_forecast_textview,
                 // Forecast data
-                vreme);
+                weatherTask.getForecastArrayA());
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
-
-        new FetchWeatherTask(getActivity()).execute("Maribor,si");
 
         return rootView;
 
