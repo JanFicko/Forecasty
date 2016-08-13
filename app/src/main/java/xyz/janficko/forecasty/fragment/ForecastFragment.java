@@ -1,6 +1,8 @@
 package xyz.janficko.forecasty.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,12 +11,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
 import xyz.janficko.forecasty.R;
+import xyz.janficko.forecasty.activity.DetailActivity;
 import xyz.janficko.forecasty.task.FetchWeatherTask;
 
 /**
@@ -50,6 +55,16 @@ public class ForecastFragment extends Fragment {
         if (id == R.id.action_refresh) {
             FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
             weatherTask.execute("Maribor,si");
+
+            forecastAdapter = new ArrayAdapter<String>(
+                    // The current context (this fragment's parent activity)
+                    getActivity(),
+                    // ID of the list item layout
+                    R.layout.list_item_forecast,
+                    // ID of textview to populate
+                    R.id.list_item_forecast_textview,
+                    // Forecast data
+                    weatherTask.getForecastArrayA());
             return true;
         }
 
@@ -74,6 +89,14 @@ public class ForecastFragment extends Fragment {
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra(Intent.EXTRA_TEXT, forecastAdapter.getItem(i));
+                startActivity(intent);
+            }
+        });
 
         return rootView;
 
