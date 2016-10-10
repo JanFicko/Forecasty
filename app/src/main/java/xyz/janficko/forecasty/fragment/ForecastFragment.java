@@ -1,6 +1,8 @@
 package xyz.janficko.forecasty.fragment;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
@@ -16,11 +18,21 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import xyz.janficko.forecasty.R;
+import xyz.janficko.forecasty.WeatherDataParser;
 import xyz.janficko.forecasty.activity.DetailActivity;
-import xyz.janficko.forecasty.task.FetchWeatherTask;
 
 /**
  * Created by Jan on 8. 08. 2016.
@@ -29,8 +41,7 @@ public class ForecastFragment extends Fragment {
 
     private ArrayAdapter<String> forecastAdapter;
 
-    public ForecastFragment() {
-    }
+    public ForecastFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,30 +64,27 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
 
         if (id == R.id.action_refresh) {
-            FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-            weatherTask.execute("Maribor,si");
-
-            forecastAdapter = new ArrayAdapter<String>(
-                    // The current context (this fragment's parent activity)
-                    getActivity(),
-                    // ID of the list item layout
-                    R.layout.list_item_forecast,
-                    // ID of textview to populate
-                    R.id.list_item_forecast_textview,
-                    // Forecast data
-                    weatherTask.getForecastArrayA());
+            FetchWeatherTask weatherTask = new FetchWeatherTask();
+            weatherTask.execute("94043");
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-        weatherTask.execute("Maribor,si");
-
+        // Create some dummy data for the ListView.  Here's a sample weekly forecast
+        String[] data = {
+                "Mon 6/23 - Sunny - 31/17",
+                "Tue 6/24 - Foggy - 21/8",
+                "Wed 6/25 - Cloudy - 22/17",
+                "Thurs 6/26 - Rainy - 18/11",
+                "Fri 6/27 - Foggy - 21/10",
+                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
+                "Sun 6/29 - Sunny - 20/7"
+        };
+        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
         forecastAdapter = new ArrayAdapter<String>(
                 // The current context (this fragment's parent activity)
                 getActivity(),
@@ -85,10 +93,11 @@ public class ForecastFragment extends Fragment {
                 // ID of textview to populate
                 R.id.list_item_forecast_textview,
                 // Forecast data
-                weatherTask.getForecastArrayA());
+                new ArrayList<String>());
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -98,8 +107,137 @@ public class ForecastFragment extends Fragment {
             }
         });
 
+
         return rootView;
 
     }
 
+    private void updateWeather() {
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        weatherTask.execute("Maribor,si");
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+
+        private static final String APPID = "7f5abb431c205025e73ea0ceb1651e0d";
+        private static final int numDays = 7;
+
+        @Override
+        protected String[] doInBackground(String... params) {
+
+            String[] result = {};
+            String city = params[0];
+
+            // These two need to be declared outside the try/catch
+            // so that they can be closed in the finally block.
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+
+            // Will contain the raw JSON response as a string.
+            String forecastJsonStr = null;
+
+            try {
+                final String OPENWEATHER_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
+                final String QUERY_PARAM = "q";
+                final String FORMAT_PARAM = "mode";
+                final String UNITS_PARAM = "units";
+                final String DAYS_PARAM = "cnt";
+                final String KEY_PARAM = "APPID";
+
+                Uri.Builder builder = Uri.parse(OPENWEATHER_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_PARAM, city)
+                        .appendQueryParameter(FORMAT_PARAM, "json")
+                        .appendQueryParameter(UNITS_PARAM, "metric")
+                        .appendQueryParameter(DAYS_PARAM, "7")
+                        .appendQueryParameter(KEY_PARAM, APPID);
+
+                String baseUrl = builder.build().toString();
+                URL url = new URL(baseUrl);
+
+                // Create the request to OpenWeatherMap, and open the connection
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                // Read the input stream into a String
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    return null;
+                }
+                forecastJsonStr = buffer.toString();
+
+                WeatherDataParser weatherDataPraser = new WeatherDataParser();
+
+                try {
+                    result = weatherDataPraser.getWeatherDataFromJson(forecastJsonStr, numDays);
+                } catch (JSONException e) {
+                    Log.e("FetchWeatherTask", e.getMessage(), e);
+                    e.printStackTrace();
+                }
+
+
+            } catch (IOException e) {
+                Log.e("FetchWeatherTask", "Error ", e);
+
+                return null;
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e("FetchWeatherTask", "Error closing stream", e);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String[] strings) {
+            if (strings != null) {
+                forecastAdapter.clear();
+                for(String dayForecastStr : strings) {
+                    forecastAdapter.add(dayForecastStr);
+                    Log.v("ADAPTER", dayForecastStr);
+                }
+                // New data is back from the server.  Hooray!
+            }
+        }
+    }
+
+
+    private void formatToArrayList(String[] result){
+        ArrayList<String> forecastArrayList = new ArrayList<String>();
+        if (result != null) {
+            for(String dayForecastStr : result) {
+                forecastArrayList.add(dayForecastStr);
+            }
+        }
+    }
 }
