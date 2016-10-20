@@ -1,9 +1,11 @@
 package xyz.janficko.forecasty.fragment;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -64,8 +66,9 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
 
         if (id == R.id.action_refresh) {
-            FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("94043");
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = settings.getString(getString(R.string.pref_key_location), getString(R.string.pref_default_location));
+            updateWeather(location);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -74,17 +77,6 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        // Create some dummy data for the ListView.  Here's a sample weekly forecast
-        String[] data = {
-                "Mon 6/23 - Sunny - 31/17",
-                "Tue 6/24 - Foggy - 21/8",
-                "Wed 6/25 - Cloudy - 22/17",
-                "Thurs 6/26 - Rainy - 18/11",
-                "Fri 6/27 - Foggy - 21/10",
-                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
-                "Sun 6/29 - Sunny - 20/7"
-        };
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
         forecastAdapter = new ArrayAdapter<String>(
                 // The current context (this fragment's parent activity)
                 getActivity(),
@@ -112,15 +104,22 @@ public class ForecastFragment extends Fragment {
 
     }
 
-    private void updateWeather() {
+    /**
+     * Temporary method. Is called when user clicks refresh option.
+     *
+     * @param location
+     */
+    private void updateWeather(String location) {
         FetchWeatherTask weatherTask = new FetchWeatherTask();
-        weatherTask.execute("Maribor,si");
+        weatherTask.execute(location);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        updateWeather();
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = settings.getString(getString(R.string.pref_key_location), getString(R.string.pref_default_location));
+        updateWeather(location);
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
@@ -128,6 +127,12 @@ public class ForecastFragment extends Fragment {
         private static final String APPID = "7f5abb431c205025e73ea0ceb1651e0d";
         private static final int numDays = 7;
 
+        /**
+         * Get data from outside source.
+         *
+         * @param params
+         * @return
+         */
         @Override
         protected String[] doInBackground(String... params) {
 
@@ -218,6 +223,11 @@ public class ForecastFragment extends Fragment {
             return result;
         }
 
+        /**
+         * Do something with data after it has been fetched.
+         *
+         * @param strings
+         */
         @Override
         protected void onPostExecute(String[] strings) {
             if (strings != null) {
@@ -226,12 +236,15 @@ public class ForecastFragment extends Fragment {
                     forecastAdapter.add(dayForecastStr);
                     Log.v("ADAPTER", dayForecastStr);
                 }
-                // New data is back from the server.  Hooray!
             }
         }
     }
 
-
+    /**
+     * Transform string array to ArrayList.
+     *
+     * @param result
+     */
     private void formatToArrayList(String[] result){
         ArrayList<String> forecastArrayList = new ArrayList<String>();
         if (result != null) {
