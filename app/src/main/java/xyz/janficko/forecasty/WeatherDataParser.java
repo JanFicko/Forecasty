@@ -46,10 +46,10 @@ public class WeatherDataParser {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity);
         String unitType = sharedPreferences.getString(context.getString(R.string.pref_unit_key), context.getString(R.string.pref_unit_default));
 
-        if(unitType.equals(context.getString(R.string.pref_unit_label_imperial))){
+        if(unitType.equals(context.getString(R.string.pref_unit_imperial))){
             high = (high * 1.8) + 32;
             low = (low * 1.8) + 32;
-        } else if(!unitType.equals(context.getString(R.string.pref_unit_label_metric))){
+        } else if(!unitType.equals(context.getString(R.string.pref_unit_metric))){
             Log.e("ERROR UNIT", "Unit type not found: " + unitType);
         }
 
