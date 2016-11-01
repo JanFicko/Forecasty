@@ -1,5 +1,9 @@
 package xyz.janficko.forecasty;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -9,12 +13,20 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 
+import xyz.janficko.forecasty.fragment.ForecastFragment;
+
 /**
  * Created by Jan on 11. 08. 2016.
  */
 public class WeatherDataParser {
 
+    private Context context;
+
     public WeatherDataParser(){}
+
+    public WeatherDataParser(Context context){
+        this.context = context;
+    }
 
     /* The date/time conversion code is going to be moved outside the asynctask later,
      * so for convenience we're breaking it out into its own method now.
@@ -30,11 +42,21 @@ public class WeatherDataParser {
      * Prepare the weather high/lows for presentation.
      */
     private String formatHighLows(double high, double low) {
-        // For presentation, assume the user doesn't care about tenths of a degree.
+        Activity activity = (Activity) context;
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity);
+        String unitType = sharedPreferences.getString(context.getString(R.string.pref_unit_key), context.getString(R.string.pref_unit_default));
+
+        if(unitType.equals(context.getString(R.string.pref_unit_label_imperial))){
+            high = (high * 1.8) + 32;
+            low = (low * 1.8) + 32;
+        } else if(!unitType.equals(context.getString(R.string.pref_unit_label_metric))){
+            Log.e("ERROR UNIT", "Unit type not found: " + unitType);
+        }
+
         long roundedHigh = Math.round(high);
         long roundedLow = Math.round(low);
 
-        String highLowStr = roundedHigh + "/" + roundedLow;
+        String highLowStr = roundedHigh + " / " + roundedLow;
         return highLowStr;
     }
 

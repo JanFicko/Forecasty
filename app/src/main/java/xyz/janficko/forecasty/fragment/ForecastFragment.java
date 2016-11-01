@@ -67,7 +67,7 @@ public class ForecastFragment extends Fragment {
 
         if (id == R.id.action_refresh) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String location = settings.getString(getString(R.string.pref_key_location), getString(R.string.pref_default_location));
+            String location = settings.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
             updateWeather(location);
             return true;
         }
@@ -118,7 +118,7 @@ public class ForecastFragment extends Fragment {
     public void onStart() {
         super.onStart();
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = settings.getString(getString(R.string.pref_key_location), getString(R.string.pref_default_location));
+        String location = settings.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
         updateWeather(location);
     }
 
@@ -193,7 +193,7 @@ public class ForecastFragment extends Fragment {
                 }
                 forecastJsonStr = buffer.toString();
 
-                WeatherDataParser weatherDataPraser = new WeatherDataParser();
+                WeatherDataParser weatherDataPraser = new WeatherDataParser(getActivity());
 
                 try {
                     result = weatherDataPraser.getWeatherDataFromJson(forecastJsonStr, numDays);
@@ -234,7 +234,7 @@ public class ForecastFragment extends Fragment {
                 forecastAdapter.clear();
                 for(String dayForecastStr : strings) {
                     forecastAdapter.add(dayForecastStr);
-                    Log.v("ADAPTER", dayForecastStr);
+                    //Log.v("ADAPTER", dayForecastStr);
                 }
             }
         }

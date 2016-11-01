@@ -4,13 +4,19 @@
     android:layout_height="match_parent">
 
     <EditTextPreference
-        android:title="@string/pref_title_location"
-        android:key="@string/pref_key_location"
-        android:defaultValue="@string/pref_default_location"
+        android:title="@string/pref_location_title"
+        android:key="@string/pref_location_key"
+        android:defaultValue="@string/pref_location_default"
         android:capitalize="words"
         android:inputType="textCapWords"
         android:maxLines="1"
         android:selectAllOnFocus="true"
         android:singleLine="true" />
+    <ListPreference
+        android:title="@string/pref_unit_title"
+        android:key="@string/pref_unit_key"
+        android:defaultValue="@string/pref_unit_default"
+        android:entryValues="@array/pref_unit_values"
+        android:entries="@array/pref_unit_values" />
 
 </PreferenceScreen>
