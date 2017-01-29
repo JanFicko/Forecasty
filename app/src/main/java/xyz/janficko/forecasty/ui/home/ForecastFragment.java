@@ -1,4 +1,4 @@
-package xyz.janficko.forecasty.fragment;
+package xyz.janficko.forecasty.ui.home;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.json.JSONException;
 
@@ -29,17 +27,15 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
+import xyz.janficko.forecasty.BuildConfig;
 import xyz.janficko.forecasty.R;
-import xyz.janficko.forecasty.WeatherDataParser;
-import xyz.janficko.forecasty.activity.DetailActivity;
+import xyz.janficko.forecasty.utilities.WeatherDataParser;
+import xyz.janficko.forecasty.ui.detail.DetailActivity;
 
-/**
- * Created by Jan on 8. 08. 2016.
- */
 public class ForecastFragment extends Fragment {
+
+    private static final String API_KEY = BuildConfig.API_KEY;
 
     private ArrayAdapter<String> forecastAdapter;
 
@@ -124,7 +120,6 @@ public class ForecastFragment extends Fragment {
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
-        private static final String APPID = "7f5abb431c205025e73ea0ceb1651e0d";
         private static final int numDays = 7;
 
         /**
@@ -160,7 +155,7 @@ public class ForecastFragment extends Fragment {
                         .appendQueryParameter(FORMAT_PARAM, "json")
                         .appendQueryParameter(UNITS_PARAM, "metric")
                         .appendQueryParameter(DAYS_PARAM, "7")
-                        .appendQueryParameter(KEY_PARAM, APPID);
+                        .appendQueryParameter(KEY_PARAM, API_KEY);
 
                 String baseUrl = builder.build().toString();
                 URL url = new URL(baseUrl);

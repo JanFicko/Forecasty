@@ -1,4 +1,4 @@
-package xyz.janficko.forecasty;
+package xyz.janficko.forecasty.ui.home;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,8 +10,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import xyz.janficko.forecasty.activity.SettingsActivity;
-import xyz.janficko.forecasty.fragment.ForecastFragment;
+import xyz.janficko.forecasty.R;
+import xyz.janficko.forecasty.ui.settings.SettingsActivity;
 
 public class MainActivity extends AppCompatActivity {
 

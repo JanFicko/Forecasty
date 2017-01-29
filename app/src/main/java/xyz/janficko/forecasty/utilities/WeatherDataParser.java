@@ -1,4 +1,4 @@
-package xyz.janficko.forecasty;
+package xyz.janficko.forecasty.utilities;
 
 import android.app.Activity;
 import android.content.Context;
@@ -13,7 +13,7 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 
-import xyz.janficko.forecasty.fragment.ForecastFragment;
+import xyz.janficko.forecasty.R;
 
 /**
  * Created by Jan on 11. 08. 2016.

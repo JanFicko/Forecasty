@@ -1,4 +1,4 @@
-package xyz.janficko.forecasty.activity;
+package xyz.janficko.forecasty.ui.settings;
 
 
 import android.content.SharedPreferences;
